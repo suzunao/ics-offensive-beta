@@ -1,0 +1,1042 @@
+tools:
+  # ── PLC ──
+  - name: plc_s7_extract
+    description: Extrae bloques de programa de un PLC Siemens S7 (OB, FB, DB, FC)
+    script: plc/siemens_s7
+    function: extract_plc_program
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: rack
+        type: integer
+        default: 0
+      - name: slot
+        type: integer
+        default: 1
+      - name: block_type
+        type: string
+        default: "all"
+        enum: ["OB", "FB", "FC", "DB", "all"]
+    dependencies: [python-snap7]
+
+  - name: plc_s7_inject
+    description: Inyecta lógica maliciosa en un PLC Siemens S7
+    script: plc/siemens_s7
+    function: inject_malicious_logic
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: block_number
+        type: integer
+        required: true
+      - name: logic_file
+        type: string
+        description: Path al archivo con la lógica MC7 a inyectar
+    dependencies: [python-snap7]
+
+  - name: plc_s7_password_crack
+    description: Crackea la contraseña de protección de un S7-1200/1500
+    script: plc/siemens_s7
+    function: crack_s7_password
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+    dependencies: [python-snap7]
+
+  - name: plc_s7_dos
+    description: Realiza DoS contra un PLC Siemens S7 (conexión, STOP, malformed)
+    script: plc/siemens_s7
+    function: s7_dos
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: method
+        type: string
+        default: "connection_exhaust"
+        enum: ["connection_exhaust", "plc_stop", "malformed_rosctr"]
+
+  - name: plc_cip_tag_enum
+    description: Enumera tags en un PLC Allen-Bradley via CIP
+    script: plc/allen_bradley
+    function: enumerate_tags
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: path
+        type: string
+        default: ""
+    dependencies: [pycomm3]
+
+  - name: plc_cip_tag_write
+    description: Escribe tags en un PLC Allen-Bradley
+    script: plc/allen_bradley
+    function: write_tag
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: tag_name
+        type: string
+        required: true
+      - name: value
+        type: any
+        required: true
+    dependencies: [pycomm3]
+
+  - name: plc_cip_mode_change
+    description: Cambia el modo de un controlador Allen-Bradley (RUN/PROGRAM)
+    script: plc/allen_bradley
+    function: change_controller_mode
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: mode
+        type: string
+        enum: ["RUN", "PROGRAM", "REMOTE_RUN", "REMOTE_PROGRAM"]
+    dependencies: [pycomm3]
+
+  - name: plc_modbus_read
+    description: Lee registros/coils/inputs Modbus desde un dispositivo
+    script: plc/schneider_modicon
+    function: modbus_read
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 502
+      - name: address
+        type: integer
+        required: true
+      - name: count
+        type: integer
+        default: 1
+      - name: function_code
+        type: integer
+        default: 3
+        enum: [1, 2, 3, 4]
+    dependencies: [pymodbus]
+
+  - name: plc_modbus_write
+    description: Escribe registros/coils Modbus
+    script: plc/schneider_modicon
+    function: modbus_write
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: address
+        type: integer
+        required: true
+      - name: value
+        type: any
+        required: true
+      - name: function_code
+        type: integer
+        default: 6
+        enum: [5, 6, 15, 16]
+    dependencies: [pymodbus]
+
+  - name: plc_modbus_fuzz
+    description: Fuzzing de excepciones Modbus para DoS
+    script: plc/schneider_modicon
+    function: modbus_exception_fuzz
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 502
+      - name: duration
+        type: integer
+        default: 30
+    dependencies: [pymodbus]
+
+  - name: plc_mc7_disasm
+    description: Desensambla bytecode MC7 de Siemens a AWL (Statement List)
+    script: plc/mc7_reverse
+    function: disassemble_mc7
+    parameters:
+      - name: mc7_data
+        type: string
+        description: Bytecode MC7 en hex o path a archivo
+      - name: output_format
+        type: string
+        default: "awl"
+        enum: ["awl", "ladder", "json"]
+
+  - name: plc_ladder_inject
+    description: Inyecta un rung backdoor en lógica ladder de un PLC Siemens
+    script: plc/ladder_inject
+    function: inject_ladder_rung
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: trigger_merker
+        type: string
+        default: "M100.0"
+      - name: output_address
+        type: string
+        default: "Q0.0"
+      - name: original_mc7_file
+        type: string
+        description: Path al archivo MC7 original extraído
+    dependencies: [python-snap7]
+
+  - name: plc_timed_bomb
+    description: Inyecta una bomba lógica temporizada en un PLC
+    script: plc/logic_rootkit
+    function: deploy_timed_bomb
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: trigger_date
+        type: string
+        required: true
+        description: Fecha de activación (YYYY-MM-DD)
+      - name: trigger_time
+        type: string
+        default: "00:00:00"
+      - name: payload_type
+        type: string
+        default: "output_override"
+        enum: ["output_override", "alarm_disable", "setpoint_change"]
+    dependencies: [python-snap7]
+
+  - name: plc_logic_rootkit
+    description: Despliega un rootkit de nivel lógico (Stuxnet-style)
+    script: plc/logic_rootkit
+    function: deploy_logic_rootkit
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: hide_technique
+        type: string
+        default: "fb_masquerade"
+        enum: ["fb_masquerade", "clean_upload_backdoor"]
+    dependencies: [python-snap7]
+
+  - name: plc_covert_channel
+    description: Crea canal encubierto usando variables de proceso
+    script: plc/logic_rootkit
+    function: setup_covert_channel
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: register_address
+        type: integer
+        required: true
+      - name: encoding
+        type: string
+        default: "lsb"
+        enum: ["lsb", "base_offset"]
+    dependencies: [python-snap7]
+
+  # ── RTU ──
+  - name: rtu_dnp3_crob
+    description: Inyecta un comando CROB (Control Relay Output Block) en DNP3
+    script: rtu/dnp3_crob
+    function: crob_inject
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 20000
+      - name: index
+        type: integer
+        required: true
+      - name: control_code
+        type: string
+        default: "PULSE_ON"
+        enum: ["PULSE_ON", "PULSE_OFF", "LATCH_ON", "LATCH_OFF", "CLOSE", "TRIP"]
+      - name: count
+        type: integer
+        default: 1
+      - name: on_time
+        type: integer
+        default: 100
+      - name: off_time
+        type: integer
+        default: 100
+    dependencies: [pydnp3]
+
+  - name: rtu_dnp3_time_sync
+    description: Ataque de sincronización temporal DNP3 (desvía el reloj del RTU)
+    script: rtu/dnp3_time_sync
+    function: time_sync_attack
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 20000
+      - name: offset_hours
+        type: integer
+        required: true
+    dependencies: [pydnp3]
+
+  - name: rtu_dnp3_unsolicited
+    description: Inyecta una respuesta no solicitada DNP3 (falsas alarmas/eventos)
+    script: rtu/dnp3_unsolicited
+    function: inject_unsolicited_response
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 20000
+      - name: event_type
+        type: string
+        default: "binary"
+        enum: ["binary", "analog", "counter"]
+      - name: values
+        type: array
+        required: true
+    dependencies: [pydnp3]
+
+  - name: rtu_dnp3_recon
+    description: Enumeración DNP3 Class 0 (lee todos los puntos del RTU)
+    script: rtu/dnp3_recon
+    function: class0_read
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 20000
+    dependencies: [pydnp3]
+
+  - name: rtu_iec104_breaker
+    description: Controla un breaker via IEC 60870-5-104 (comando individual)
+    script: rtu/iec104_breaker
+    function: single_command
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 2404
+      - name: ioa
+        type: integer
+        required: true
+        description: Information Object Address
+      - name: command
+        type: string
+        enum: ["ON", "OFF"]
+    dependencies: [lib60870]
+
+  - name: rtu_iec104_mass_trip
+    description: Disparo masivo de breakers via IEC 104 (Industroyer-style)
+    script: rtu/iec104_breaker
+    function: mass_trip
+    parameters:
+      - name: targets
+        type: array
+        required: true
+        description: Lista de {ip, port, ioa}
+      - name: delay_ms
+        type: integer
+        default: 10
+    dependencies: [lib60870]
+
+  # ── SCADA ──
+  - name: scada_wonderware_decrypt
+    description: Descifra credenciales de Wonderware InTouch (XOR key)
+    script: scada/wonderware
+    function: decrypt_credentials
+    parameters:
+      - name: user_file
+        type: string
+        required: true
+        description: Path al archivo de usuarios de InTouch
+
+  - name: scada_wonderware_dde_inject
+    description: Inyección DDE en Wonderware InTouch
+    script: scada/wonderware
+    function: dde_inject
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: tagname
+        type: string
+        required: true
+      - name: value
+        type: string
+        required: true
+
+  - name: scada_wincc_sql_connect
+    description: Conexión a SQL Server de Siemens WinCC con credenciales por defecto
+    script: scada/wincc
+    function: connect_default_sql
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: use_default_creds
+        type: boolean
+        default: true
+    dependencies: [pymssql]
+
+  - name: scada_wincc_opc_write
+    description: Escritura OPC DA sobre WinCC
+    script: scada/wincc
+    function: opc_da_write
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: opc_server
+        type: string
+        default: "OPCServer.WinCC.1"
+      - name: tag
+        type: string
+        required: true
+      - name: value
+        type: any
+        required: true
+    dependencies: [pywin32, OpenOPC]
+
+  - name: scada_ignition_default_access
+    description: Acceso por defecto a Ignition Gateway
+    script: scada/ignition
+    function: default_gateway_access
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 8088
+    dependencies: [requests]
+
+  - name: scada_ignition_java_deserialize
+    description: Exploit de deserialización Java en Ignition
+    script: scada/ignition
+    function: java_deserialize_rce
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 8088
+      - name: command
+        type: string
+        required: true
+    dependencies: [requests, ysoserial]
+
+  - name: scada_historian_data_manip
+    description: Manipula datos históricos en OSIsoft PI / Wonderware Historian
+    script: scada/historian
+    function: manipulate_historical_data
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: system
+        type: string
+        enum: ["osisoft_pi", "wonderware_historian"]
+      - name: tag
+        type: string
+        required: true
+      - name: start_time
+        type: string
+        required: true
+      - name: end_time
+        type: string
+        required: true
+      - name: value
+        type: number
+        required: true
+
+  # ── MITM ──
+  - name: mitm_arp_spoof
+    description: ARP spoofing entre SCADA y PLC para interceptar tráfico
+    script: mitm/arp_spoof
+    function: arp_spoof
+    parameters:
+      - name: target1_ip
+        type: string
+        required: true
+        description: IP del primer dispositivo (ej: SCADA)
+      - name: target2_ip
+        type: string
+        required: true
+        description: IP del segundo dispositivo (ej: PLC)
+      - name: interface
+        type: string
+        default: "eth0"
+    dependencies: [scapy]
+
+  - name: mitm_modbus_proxy
+    description: Proxy MITM para Modbus TCP (inspecciona y modifica tramas)
+    script: mitm/modbus_proxy
+    function: modbus_mitm
+    parameters:
+      - name: listen_port
+        type: integer
+        default: 5020
+      - name: plc_ip
+        type: string
+        required: true
+      - name: plc_port
+        type: integer
+        default: 502
+      - name: register_modifications
+        type: array
+        description: Lista de {function_code, register, original_value, modified_value}
+    dependencies: [scapy]
+
+  - name: mitm_s7_proxy
+    description: Proxy MITM para S7comm (intercepta descargas de programa)
+    script: mitm/s7_proxy
+    function: s7_mitm
+    parameters:
+      - name: listen_port
+        type: integer
+        default: 1020
+      - name: plc_ip
+        type: string
+        required: true
+      - name: plc_port
+        type: integer
+        default: 102
+      - name: intercept_download
+        type: boolean
+        default: false
+    dependencies: [scapy]
+
+  - name: mitm_dnp3_proxy
+    description: Proxy MITM para DNP3 (modifica parámetros CROB)
+    script: mitm/dnp3_proxy
+    function: dnp3_mitm
+    parameters:
+      - name: listen_port
+        type: integer
+        default: 20001
+      - name: rtu_ip
+        type: string
+        required: true
+      - name: rtu_port
+        type: integer
+        default: 20000
+    dependencies: [scapy]
+
+  # ── GRID ──
+  - name: grid_goose_spoof
+    description: Suplanta mensajes GOOSE IEC 61850 (disparo falso)
+    script: grid/goose_spoof
+    function: goose_spoof
+    parameters:
+      - name: interface
+        type: string
+        default: "eth0"
+      - name: go_id
+        type: string
+        required: true
+      - name: dst_mac
+        type: string
+        default: "01:0C:CD:01:00:01"
+      - name: vlan_id
+        type: integer
+        default: 0
+      - name: stnum
+        type: integer
+        default: 1
+      - name: sqnum
+        type: integer
+        default: 1
+      - name: data_set
+        type: string
+        required: true
+      - name: values
+        type: array
+        required: true
+    dependencies: [scapy]
+
+  - name: grid_mms_enum
+    description: Enumera IEDs via MMS (IEC 61850) — GetNameList/Read/Write
+    script: grid/mms_enum
+    function: mms_enum
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: port
+        type: integer
+        default: 102
+    dependencies: [libIEC61850]
+
+  - name: grid_relay_manipulate
+    description: Modifica ajustes de relés de protección (51/21/87)
+    script: grid/relay_settings
+    function: modify_relay_settings
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: relay_type
+        type: string
+        enum: ["overcurrent_51", "distance_21", "differential_87"]
+      - name: settings
+        type: dict
+        required: true
+    dependencies: [lib60870, pydnp3]
+
+  - name: grid_cascading_failure
+    description: Simula un fallo en cascada (dispara líneas + desactiva UFLS)
+    script: grid/cascading_failure
+    function: cascading_failure
+    parameters:
+      - name: substations
+        type: array
+        required: true
+      - name: disable_ufls
+        type: boolean
+        default: true
+    dependencies: [lib60870]
+
+  - name: grid_industroyer_deploy
+    description: Despliega módulo Industroyer (IEC104 + 61850 + OPC DA + Modbus)
+    script: grid/industroyer
+    function: deploy_industroyer
+    parameters:
+      - name: iec104_targets
+        type: array
+      - name: goose_interfaces
+        type: array
+      - name: wipe_mode
+        type: boolean
+        default: false
+    dependencies: [lib60870, libIEC61850, pymodbus]
+
+  # ── FIRMWARE ──
+  - name: fw_jtag_dump
+    description: Realiza dump de memoria via JTAG usando OpenOCD
+    script: firmware/jtag_openocd
+    function: jtag_dump
+    parameters:
+      - name: adapter
+        type: string
+        default: "ft2232"
+      - name: device
+        type: string
+        required: true
+      - name: output_file
+        type: string
+        required: true
+    dependencies: [openocd]
+
+  - name: fw_spi_dump
+    description: Lee firmware desde flash SPI (CH341A, Bus Pirate)
+    script: firmware/spi_flash
+    function: spi_dump
+    parameters:
+      - name: device
+        type: string
+        default: "/dev/ttyUSB0"
+      - name: chip_size_mb
+        type: integer
+        default: 16
+      - name: output_file
+        type: string
+        required: true
+    dependencies: [pyserial, flashrom]
+
+  - name: fw_binwalk_extract
+    description: Extrae sistema de archivos de firmware usando binwalk
+    script: firmware/binwalk_analyzer
+    function: binwalk_extract
+    parameters:
+      - name: firmware_file
+        type: string
+        required: true
+      - name: output_dir
+        type: string
+        required: true
+    dependencies: [binwalk]
+
+  - name: fw_backdoor_bootloader
+    description: Inyecta backdoor en bootloader U-Boot (hook eth_rx + magic packet)
+    script: firmware/backdoor_bootloader
+    function: inject_uboot_backdoor
+    parameters:
+      - name: firmware_file
+        type: string
+        required: true
+      - name: magic_packet
+        type: string
+        default: "0xDEADBEEF"
+      - name: shell_port
+        type: integer
+        default: 31337
+    dependencies: []
+
+  - name: fw_backdoor_kernel
+    description: Inyecta módulo kernel rootkit (syscall hook + bind shell)
+    script: firmware/backdoor_kernel
+    function: inject_lkm_rootkit
+    parameters:
+      - name: firmware_dir
+        type: string
+        required: true
+      - name: lkm_source
+        type: string
+        required: true
+      - name: hide_port
+        type: integer
+        default: 31337
+    dependencies: []
+
+  - name: fw_update_hijack
+    description: Secuestra mecanismo de actualización de firmware
+    script: firmware/update_hijack
+    function: hijack_firmware_update
+    parameters:
+      - name: update_url
+        type: string
+        required: true
+      - name: backdoor_firmware
+        type: string
+        required: true
+      - name: patch_sigcheck
+        type: boolean
+        default: true
+    dependencies: [requests, scapy]
+
+  # ── SUPPLY CHAIN ──
+  - name: sc_step7_infect
+    description: Infecta un proyecto Step7 (.s7p/.ap17) con DLL + script VBS
+    script: supply_chain/step7_infect
+    function: infect_step7_project
+    parameters:
+      - name: project_path
+        type: string
+        required: true
+      - name: dll_path
+        type: string
+        required: true
+      - name: inject_ladder
+        type: boolean
+        default: true
+    dependencies: []
+
+  - name: sc_acd_infect
+    description: Infecta un proyecto Rockell Studio 5000 (.ACD)
+    script: supply_chain/acd_infect
+    function: infect_acd_project
+    parameters:
+      - name: project_path
+        type: string
+        required: true
+      - name: hidden_tag
+        type: string
+        default: "HiddenTag"
+      - name: output_tag
+        type: string
+        required: true
+
+  - name: sc_stu_infect
+    description: Infecta un proyecto Schneider Unity Pro (.STU)
+    script: supply_chain/stu_infect
+    function: infect_stu_project
+    parameters:
+      - name: project_path
+        type: string
+        required: true
+      - name: il_code
+        type: string
+        required: true
+
+  - name: sc_dll_hijack
+    description: Genera y despliega DLL hijack para TIA Portal, RsLogix, Unity
+    script: supply_chain/dll_hijack
+    function: deploy_dll_hijack
+    parameters:
+      - name: target_software
+        type: string
+        enum: ["tia_portal", "rslogix_5000", "unity_pro"]
+        required: true
+      - name: c2_url
+        type: string
+        required: true
+      - name: output_dir
+        type: string
+        required: true
+
+  - name: sc_ews_rat
+    description: Despliega RAT en Engineering Workstation con módulos ICS
+    script: supply_chain/ews_rat
+    function: deploy_ews_rat
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: c2_url
+        type: string
+        required: true
+      - name: modules
+        type: array
+        default: ["enum_software", "extract_projects", "steal_creds", "screenshot"]
+    dependencies: [paramiko]
+
+  - name: sc_bad_usb
+    description: Genera payload BadUSB / DuckyScript para ataque físico
+    script: supply_chain/bad_usb
+    function: generate_bad_usb
+    parameters:
+      - name: payload_script
+        type: string
+        required: true
+        description: Comandos a ejecutar (DuckyScript syntax)
+      - name: output_format
+        type: string
+        default: "ducky"
+        enum: ["ducky", "arduino_leonardo", "digispark"]
+
+  - name: sc_trojan_installer
+    description: Trojaniza un instalador de software ICS (Havex-style)
+    script: supply_chain/trojan_installer
+    function: trojanize_installer
+    parameters:
+      - name: original_installer
+        type: string
+        required: true
+      - name: payload_exe
+        type: string
+        required: true
+      - name: output_path
+        type: string
+        required: true
+
+  # ── PERSISTENCE ──
+  - name: persist_plc_fw_rootkit
+    description: Despliega rootkit persistente en firmware de PLC
+    script: persistence/plc_firmware_rootkit
+    function: deploy_firmware_rootkit
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: fw_file
+        type: string
+        required: true
+      - name: trigger_function_code
+        type: integer
+        default: 0xAB
+      - name: persist_across_download
+        type: boolean
+        default: true
+
+  - name: persist_switch_backdoor
+    description: Instala backdoor en switch OT (Hirschmann, Cisco IE, Ruggedcom)
+    script: persistence/switch_backdoor
+    function: backdoor_switch
+    parameters:
+      - name: switch_ip
+        type: string
+        required: true
+      - name: ssh_user
+        type: string
+        required: true
+      - name: ssh_pass
+        type: string
+        required: true
+      - name: enable_port_mirror
+        type: boolean
+        default: true
+      - name: hidden_vlan_id
+        type: integer
+        default: 0
+    dependencies: [paramiko]
+
+  - name: persist_wmi
+    description: Persistencia fileless via WMI Event Subscription
+    script: persistence/wmi_persistence
+    function: wmi_persist
+    parameters:
+      - name: target_ip
+        type: string
+        required: true
+      - name: username
+        type: string
+        required: true
+      - name: command
+        type: string
+        required: true
+      - name: trigger_event
+        type: string
+        default: "system_startup"
+    dependencies: [pywinrm]
+
+  - name: persist_modbus_covert
+    description: Crea canal encubierto usando registros Modbus altos
+    script: persistence/modbus_covert
+    function: setup_modbus_covert
+    parameters:
+      - name: plc_ip
+        type: string
+        required: true
+      - name: register_base
+        type: integer
+        default: 1000
+      - name: command_set
+        type: dict
+        default: {"0x01": "deploy_backdoor", "0x02": "exfiltrate", "0x03": "self_destruct"}
+    dependencies: [pymodbus]
+
+  - name: persist_multi_layer
+    description: Despliega persistencia multi-capa (PLC + HMI + SCADA + EWS + Switch)
+    script: persistence/multi_layer
+    function: deploy_multi_layer
+    parameters:
+      - name: targets
+        type: dict
+        required: true
+        description: Dict con ips de {plc, hmi, scada, ews, switch}
+      - name: c2_url
+        type: string
+        required: true
+
+  - name: persist_anti_forensics
+    description: Ejecuta contramedidas anti-forense (logs, timestamps, memoria)
+    script: persistence/anti_forensics
+    function: anti_forensic_cleanup
+    parameters:
+      - name: targets
+        type: array
+        required: true
+      - name: actions
+        type: array
+        default: ["clear_logs", "tamper_timestamps", "wipe_tools"]
+    dependencies: [paramiko]
+
+  # ── C2 ──
+  - name: c2_dns_tunnel
+    description: Establece canal C2 via DNS tunneling
+    script: c2/dns_tunnel
+    function: start_dns_c2
+    parameters:
+      - name: domain
+        type: string
+        required: true
+      - name: dns_server
+        type: string
+        default: "8.8.8.8"
+      - name: listen_port
+        type: integer
+        default: 53
+    dependencies: [dnspython]
+
+  - name: c2_modbus
+    description: Establece canal C2 nativo sobre Modbus
+    script: c2/modbus_c2
+    function: start_modbus_c2
+    parameters:
+      - name: listen_port
+        type: integer
+        default: 502
+      - name: beacon_register
+        type: integer
+        default: 1000
+      - name: command_register
+        type: integer
+        default: 1002
+    dependencies: [pymodbus]
+
+  - name: c2_icmp_tunnel
+    description: Establece canal C2 via ICMP echo
+    script: c2/icmp_tunnel
+    function: start_icmp_c2
+    parameters:
+      - name: listen_ip
+        type: string
+        required: true
+    dependencies: [scapy]
+
+  - name: c2_slow_beacon
+    description: Configura beacon lento con jitter y horario laboral
+    script: c2/slow_beacon
+    function: configure_slow_beacon
+    parameters:
+      - name: c2_url
+        type: string
+        required: true
+      - name: interval_hours
+        type: integer
+        default: 24
+      - name: jitter_percent
+        type: integer
+        default: 20
+      - name: business_hours_only
+        type: boolean
+        default: true
+      - name: skip_weekends
+        type: boolean
+        default: true
+    dependencies: [requests]
+
+  - name: c2_airgap_usb
+    description: Prepara bridge USB para entorno air-gapped
+    script: c2/airgap_usb
+    function: prepare_usb_bridge
+    parameters:
+      - name: agent_script
+        type: string
+        required: true
+      - name: usb_mount_point
+        type: string
+        default: "/media/usb"
+      - name: c2_url
+        type: string
+        required: true
+
+  # ── FULL OPERATION ──
+  - name: fullop_plan
+    description: Diseña un plan de campaña APT multi-fase para un target
+    script: full_operation/campaign_planner
+    function: plan_campaign
+    parameters:
+      - name: target_profile
+        type: string
+        required: true
+      - name: objective
+        type: string
+        required: true
+      - name: duration_days
+        type: integer
+        default: 22
+
+  - name: fullop_execute_phase
+    description: Ejecuta una fase específica de la operación
+    script: full_operation/campaign_planner
+    function: execute_phase
+    parameters:
+      - name: phase
+        type: integer
+        required: true
+        enum: [1, 2, 3, 4, 5]
+      - name: target_data
+        type: dict
+        required: true
+      - name: c2_config
+        type: dict
